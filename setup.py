@@ -1,34 +1,31 @@
 #!/usr/bin/env python
+import os
+
 from setuptools import setup, find_packages
 
-__doc__="""
-Useful stuff for django
+# FIXME: Please fix this setup.py file
 
-"""
+current_directory = os.path.dirname(__file__)
+with open(os.path.join(current_directory, 'README.rst')) as f:
+    README = f.read()
 
-version = '0.0.2'
+version = '0.0.9'
 
-setup(name='django-fusionbox',
+setup(name='django-detour',
     version=version,
-    description='Useful stuff for django',
-    author='Fusionbox programmers',
-    author_email='programmers@fusionbox.com',
-    keywords='django boilerplate',
-    long_description=__doc__,
-    url='https://github.com/fusionbox/django-fusionbox',
+    description="Manages mass redirects. Very useful after a website redesign.",
+    author="Fusionbox, Inc.",
+    author_email="programmers@fusionbox.com",
+    keywords="django redirect redirection mass massive redirects bulk csv",
+    long_description=README,
+    url="https://github.com/fusionbox/django-detour",
     packages=find_packages(),
-    package_data={
-        'fusionbox.core': ['static/js/*', 'templates/forms/fields/*'],
-        'fusionbox.panels.user_panel': ['templates/*',],
-        'fusionbox.newsletter': ['templates/newsletter/*',]
-        },
-    namespace_packages=['fusionbox'],
-    platforms = "any",
-    license='BSD',
+    platforms="any",
+    license="BSD",
     classifiers=[
-        'Environment :: Web Environment',
-        'Framework :: Django',
+        "Environment :: Web Environment",
+        "Framework :: Django",
     ],
-    install_requires = ['BeautifulSoup', 'PyYAML', 'markdown', 'phonenumbers>=5'],
-    requires = ['BeautifulSoup', 'PyYAML', 'markdown', 'phonenumbers'],
+    install_requires=[],
+    requires=[],
 )
