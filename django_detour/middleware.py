@@ -45,6 +45,10 @@ def scrape_redirects(redirect_path):
         if filename.endswith('.csv'):
             path = os.path.join(redirect_path, filename)
             reader = csv.DictReader(open(path, 'r'), fieldnames=['source', 'target', 'status_code'])
+            reader = csv.DictReader(
+                open(path, 'r'),
+                fieldnames=['source', 'target', 'status_code', 'domain']
+            )
             for index, line in enumerate(reader):
                 line['filename'] = filename
                 line['line_number'] = index
