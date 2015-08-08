@@ -81,7 +81,8 @@ class Redirect(object):
 
     def add_error(self, field, message):
         if self._errors is None:
-            self._errors = {}
+            self._errors = defaultdict(list)
+        self._errors[field].append(message)
 
     def validate(self):
         self._errors = self._errors or {}
