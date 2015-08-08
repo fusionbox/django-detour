@@ -70,9 +70,6 @@ class Redirect(object):
 
         self._errors = None
 
-    def __str__(self):
-        return self.source
-
     @property
     def errors(self):
         if self._errors is None:
