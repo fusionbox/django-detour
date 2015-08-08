@@ -77,9 +77,7 @@ class Redirect(object):
         return self._errors
 
     def is_valid(self):
-        if self._errors is None:
-            self.validate()
-        return bool(self._errors)
+        return bool(self.errors)
 
     def add_error(self, field, message):
         if self._errors is None:
