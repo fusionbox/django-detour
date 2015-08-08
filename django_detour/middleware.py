@@ -65,8 +65,8 @@ class Redirect(object):
         else:
             self.status_code = 410
 
-        self.filename = filename or ''
-        self.line_number = line_number or ''
+        self.filename = filename
+        self.line_number = line_number
 
         self._errors = None
 
