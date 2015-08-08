@@ -55,11 +55,12 @@ class Redirect(object):
     """
     Encapulates all of the information about a redirect.
     """
-    def __init__(self, source, target, status_code, filename, line_number):
+    def __init__(self, source, target, status_code, domain, filename, line_number):
         self.source = source.strip()
         self.parsed_source = urlparse.urlparse(self.source)
         self.target = (target or '').strip()
         self.parsed_target = urlparse.urlparse(self.target)
+        self.domain = domain
         if target:
             self.status_code = int(status_code or 301)
         else:
