@@ -1,22 +1,22 @@
-# FIXME: Unused import
 import os
-import urlparse
+
 import warnings
 
 from collections import defaultdict
 
+from django.utils import six
 from django.conf import settings
-from django.template import TemplateDoesNotExist
-from django.http import Http404, HttpResponse, HttpResponsePermanentRedirect
-from django.shortcuts import render
-from django.views.decorators.csrf import requires_csrf_token
+from django.http import HttpResponse
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib.sites.models import get_current_site
-from django.core import urlresolvers
 from django.utils.encoding import iri_to_uri
 
-from fusionbox import unicode_csv as csv
-
+if six.PY2:
+    import urlparse
+    import unicodecsv as csv
+else:
+    from urllib import parse as urlparse
+    import csv
 
 def get_redirect(redirects, path, full_uri):
     if full_uri in redirects:
