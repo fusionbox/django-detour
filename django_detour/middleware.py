@@ -206,7 +206,7 @@ class RedirectFallbackMiddleware(object):
     def get_redirects(self):
         # Get redirect directory
         redirect_path = getattr(settings, 'REDIRECTS_DIRECTORY',
-                               os.path.join(settings.PROJECT_PATH, '..', 'redirects'))
+                                os.path.join(settings.PROJECT_PATH, '..', 'redirects'))
 
         # Crawl the REDIRECTS_DIRECTORY scraping any CSV files found
         lines = scrape_redirects(redirect_path)
