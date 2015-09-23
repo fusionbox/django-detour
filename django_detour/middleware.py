@@ -89,9 +89,11 @@ class Redirect(object):
         self._errors = self._errors or {}
         if self.status_code < 300 or self.status_code > 399 and not self.status_code == 410:
             self.add_error(
-                    'status_code',
-                    "ERROR: {redirect.filename}:{redirect.line_number} - Non 3xx/410 status code({redirect.status_code})".format(redirect=self),
-                    )
+                'status_code',
+                "ERROR: {redirect.filename}:{redirect.line_number} "
+                "- Non 3xx/410 status code({redirect.status_code})"
+                .format(redirect=self),
+            )
 
 
 def preprocess_redirects(lines, raise_errors=True):
@@ -113,7 +115,11 @@ def preprocess_redirects(lines, raise_errors=True):
 
         # Catch duplicate declaration of source urls.
         if redirect.source in processed_redirects:
-            warning_messages[redirect.source].append("WARNING: {filename}:{line_number} -  Duplicate declaration of url".format(**line))
+            warning_messages[redirect.source].append(
+                "WARNING: {filename}:{line_number} "
+                "-  Duplicate declaration of url"
+                .format(**line)
+            )
         processed_redirects[redirect.source] = redirect
 
     def validate_redirect(redirect, with_slash=False):
@@ -126,13 +132,28 @@ def preprocess_redirects(lines, raise_errors=True):
                 to_url = to_url._replace(path=to_url.path + '/')
             else:
                 return
-        if redirect.target in processed_redirects or redirect.target == redirect.parsed_source.path:
-            error_messages[redirect.source].append('ERROR: {redirect.filename}:{redirect.line_number} - Circular redirect: {redirect.source} => {redirect.target}'.format(redirect=redirect))
-        elif urlparse.urljoin(redirect.source, to_url.path) in processed_redirects and not redirect.status_code == 410:
+        if (redirect.target in processed_redirects
+            or redirect.target == redirect.parsed_source.path):
+            error_messages[redirect.source].append(
+                'ERROR: {redirect.filename}:{redirect.line_number} '
+                '- Circular redirect: {redirect.source} => {redirect.target}'
+                .format(redirect=redirect)
+            )
+        elif (urlparse.urljoin(redirect.source, to_url.path) in processed_redirects
+              and not redirect.status_code == 410):
             if not to_url.netloc:
-                error_messages[redirect.source].append('ERROR: {redirect.filename}:{redirect.line_number} - Circular redirect: {redirect.source} => {redirect.target}'.format(redirect=redirect))
+                error_messages[redirect.source].append(
+                    'ERROR: {redirect.filename}:{redirect.line_number} '
+                    '- Circular redirect: {redirect.source} => {redirect.target}'
+                    .format(redirect=redirect)
+                )
             elif to_url.netloc and not redirect.parsed_source.netloc:
-                warning_messages[redirect.source].append('WARNING: {redirect.filename}:{redirect.line_number}: - Possible circular redirect if hosting on domain {redirect.parsed_target.netloc}: {redirect.source} => {redirect.target}'.format(redirect=redirect))
+                warning_messages[redirect.source].append(
+                    'WARNING: {redirect.filename}:{redirect.line_number}: '
+                    '- Possible circular redirect if hosting on domain '
+                    '{redirect.parsed_target.netloc}: {redirect.source} => '
+                    '{redirect.target}'.format(redirect=redirect)
+                )
 
     # Check for circular redirects.
     for source, redirect in processed_redirects.items():
@@ -143,7 +164,8 @@ def preprocess_redirects(lines, raise_errors=True):
     # Now that we're done, either raise an exception if an error was raised and
     # we are not just running in validation mode
     if error_messages and raise_errors:
-        raise ImproperlyConfigured('There were errors while parsing redirects.  Run ./manage.py validate_redirects for error details')
+        raise ImproperlyConfigured('There were errors while parsing redirects. '
+                                   'Run ./manage.py validate_redirects for error details')
     # Output warnings for all errors and warnings found.
     for messages in warning_messages.values() + error_messages.values():
         for message in messages:
