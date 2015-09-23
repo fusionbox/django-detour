@@ -1,3 +1,11 @@
+"""This module defines methods for implementing HTTP redirects.
+
+Redirects are read from CSV files. In the case the Django app returns
+a 404 response, the original request URL is looked up in the redirects
+table and if one is found the appropriate redirect response is returned
+instead.
+"""
+
 import os
 
 import warnings
