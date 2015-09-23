@@ -113,7 +113,6 @@ def preprocess_redirects(lines, raise_errors=True):
 
         # Catch duplicate declaration of source urls.
         if redirect.source in processed_redirects:
-            processed_redirects[redirect.source]
             warning_messages[redirect.source].append("WARNING: {filename}:{line_number} -  Duplicate declaration of url".format(**line))
         processed_redirects[redirect.source] = redirect
 
