@@ -36,8 +36,6 @@ def get_redirect(redirects, path, full_uri):
     else:
         return None
 
-    #target = redirec['target']
-    #status_code = redirec['status_code']
     target = redirect.target
     status_code = redirect.status_code
 
@@ -140,6 +138,7 @@ def preprocess_redirects(lines, raise_errors=True):
                 to_url = to_url._replace(path=to_url.path + '/')
             else:
                 return
+
         if (redirect.target in processed_redirects
             or redirect.target == redirect.parsed_source.path):
             error_messages[redirect.source].append(
@@ -211,7 +210,6 @@ class RedirectFallbackMiddleware(object):
         # Crawl the REDIRECTS_DIRECTORY scraping any CSV files found
         lines = scrape_redirects(redirect_path)
 
-        #redirects = preprocess_redirects(lines)
         return lines
 
     def process_response(self, request, response):
