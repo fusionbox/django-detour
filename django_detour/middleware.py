@@ -38,6 +38,10 @@ def get_redirect(redirects, path, full_uri):
 
     target = redirect.target
     status_code = redirect.status_code
+    netloc = urlparse.urlparse(full_uri).netloc
+
+    if redirect.domain and redirect.domain != netloc:
+        return None
 
     response = HttpResponse('', status=status_code)
     response['Location'] = target or None
