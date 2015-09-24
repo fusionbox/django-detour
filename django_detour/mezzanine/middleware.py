@@ -13,8 +13,7 @@ from ..middleware import (
 if six.PY2:
     from urlparse import urlparse
 else:
-    from urllib import parse as urlparse
-
+    from urllib.parse import urlparse
 
 class RedirectFallbackMiddleware(PlainRedirectFallbackMiddleware):
     def process_response(self, request, response):

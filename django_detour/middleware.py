@@ -174,7 +174,10 @@ def preprocess_redirects(lines, raise_errors=True):
         raise ImproperlyConfigured('There were errors while parsing redirects. '
                                    'Run ./manage.py validate_redirects for error details')
     # Output warnings for all errors and warnings found.
-    for messages in warning_messages.values() + error_messages.values():
+    # Python 2/3 compatibility requires calling list() on the values.
+    warning_message_list = list(warning_messages.values())
+    error_message_list = list(error_messages.values())
+    for messages in warning_message_list + error_message_list:
         for message in messages:
             warnings.warn(message)
 
