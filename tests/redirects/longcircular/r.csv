@@ -1,0 +1,9 @@
+/bar/,/baz/,302
+/baz/,/toto/,302
+/doe/,/john/,302
+/foo/,/bar/,302
+/john/,/doe/,302
+/tata/,/titi/,302
+/titi/,/foo/,302
+/toto/,/tutu/,302
+/tutu/,/tata/,302

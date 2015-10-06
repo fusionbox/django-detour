@@ -1,0 +1,2 @@
+http://a.example.com/foo/,http://a.example.com/bar/,302
+http://b.example.com/bar/,http://b.example.com/foo/,302
