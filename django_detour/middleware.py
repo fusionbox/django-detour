@@ -137,11 +137,8 @@ def preprocess_redirects(lines, raise_errors=True):
         Finds circular and possible circular redirects.
         """
         to_url = redirect.parsed_target
-        if with_slash:
-            if not to_url.path.endswith('/'):
-                to_url = to_url._replace(path=to_url.path + '/')
-            else:
-                return
+        if with_slash and not to_url.path.endswith('/'):
+            to_url = to_url._replace(path=to_url.path + '/')
 
         if (redirect.target in processed_redirects
             or redirect.target == redirect.parsed_source.path):
