@@ -1,22 +1,30 @@
-# FIXME: Unused import
+"""This module defines methods for implementing HTTP redirects.
+
+Redirects are read from CSV files. In the case the Django app returns
+a 404 response, the original request URL is looked up in the redirects
+table and if one is found the appropriate redirect response is returned
+instead.
+"""
+
 import os
-import urlparse
+
 import warnings
 
 from collections import defaultdict
 
+from django.utils import six
 from django.conf import settings
-from django.template import TemplateDoesNotExist
-from django.http import Http404, HttpResponse, HttpResponsePermanentRedirect
-from django.shortcuts import render
-from django.views.decorators.csrf import requires_csrf_token
+from django.http import HttpResponse
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib.sites.models import get_current_site
-from django.core import urlresolvers
 from django.utils.encoding import iri_to_uri
 
-from fusionbox import unicode_csv as csv
-
+if six.PY2:
+    import urlparse
+    import unicodecsv as csv
+else:
+    from urllib import parse as urlparse
+    import csv
 
 def get_redirect(redirects, path, full_uri):
     if full_uri in redirects:
@@ -28,10 +36,12 @@ def get_redirect(redirects, path, full_uri):
     else:
         return None
 
-    #target = redirec['target']
-    #status_code = redirec['status_code']
     target = redirect.target
     status_code = redirect.status_code
+    netloc = urlparse.urlparse(full_uri).netloc
+
+    if redirect.domain and redirect.domain != netloc:
+        return None
 
     response = HttpResponse('', status=status_code)
     response['Location'] = target or None
@@ -40,39 +50,34 @@ def get_redirect(redirects, path, full_uri):
 
 
 def scrape_redirects(redirect_path):
-    lines = []
     for filename in os.listdir(redirect_path):
         if filename.endswith('.csv'):
             path = os.path.join(redirect_path, filename)
-            reader = csv.DictReader(open(path, 'r'), fieldnames=['source', 'target', 'status_code'])
-            for index, line in enumerate(reader):
-                line['filename'] = filename
-                line['line_number'] = index
-                lines.append(line)
-    return lines
+            with open(path, 'r') as csvfile:
+                reader = csv.DictReader(csvfile, fieldnames=['source', 'target', 'status_code', 'domain'])
+                for index, line in enumerate(reader):
+                    yield dict(line, filename=filename, line_number=index)
 
 
 class Redirect(object):
     """
     Encapulates all of the information about a redirect.
     """
-    def __init__(self, source, target, status_code, filename, line_number):
+    def __init__(self, source, target, status_code, domain, filename, line_number):
         self.source = source.strip()
         self.parsed_source = urlparse.urlparse(self.source)
         self.target = (target or '').strip()
         self.parsed_target = urlparse.urlparse(self.target)
+        self.domain = domain
         if target:
             self.status_code = int(status_code or 301)
         else:
             self.status_code = 410
 
-        self.filename = filename or ''
-        self.line_number = line_number or ''
+        self.filename = filename
+        self.line_number = line_number
 
         self._errors = None
-
-    def __str__(self):
-        return self.source
 
     @property
     def errors(self):
@@ -81,21 +86,22 @@ class Redirect(object):
         return self._errors
 
     def is_valid(self):
-        if self._errors is None:
-            self.validate()
-        return bool(self._errors)
+        return bool(self.errors)
 
     def add_error(self, field, message):
         if self._errors is None:
-            self._errors = {}
+            self._errors = defaultdict(list)
+        self._errors[field].append(message)
 
     def validate(self):
         self._errors = self._errors or {}
         if self.status_code < 300 or self.status_code > 399 and not self.status_code == 410:
             self.add_error(
-                    'status_code',
-                    "ERROR: {redirect.filename}:{redirect.line_number} - Non 3xx/410 status code({redirect.status_code})".format(redirect=self),
-                    )
+                'status_code',
+                "ERROR: {redirect.filename}:{redirect.line_number} "
+                "- Non 3xx/410 status code({redirect.status_code})"
+                .format(redirect=self),
+            )
 
 
 def preprocess_redirects(lines, raise_errors=True):
@@ -117,8 +123,11 @@ def preprocess_redirects(lines, raise_errors=True):
 
         # Catch duplicate declaration of source urls.
         if redirect.source in processed_redirects:
-            processed_redirects[redirect.source]
-            warning_messages[redirect.source].append("WARNING: {filename}:{line_number} -  Duplicate declaration of url".format(**line))
+            warning_messages[redirect.source].append(
+                "WARNING: {filename}:{line_number} "
+                "-  Duplicate declaration of url"
+                .format(**line)
+            )
         processed_redirects[redirect.source] = redirect
 
     def validate_redirect(redirect, with_slash=False):
@@ -126,18 +135,31 @@ def preprocess_redirects(lines, raise_errors=True):
         Finds circular and possible circular redirects.
         """
         to_url = redirect.parsed_target
-        if with_slash:
-            if not to_url.path.endswith('/'):
-                to_url = to_url._replace(path=to_url.path + '/')
-            else:
-                return
-        if redirect.target in processed_redirects or redirect.target == redirect.parsed_source.path:
-            error_messages[redirect.source].append('ERROR: {redirect.filename}:{redirect.line_number} - Circular redirect: {redirect.source} => {redirect.target}'.format(redirect=redirect))
-        elif urlparse.urljoin(redirect.source, to_url.path) in processed_redirects and not redirect.status_code == 410:
+        if with_slash and not to_url.path.endswith('/'):
+            to_url = to_url._replace(path=to_url.path + '/')
+
+        if (redirect.target in processed_redirects
+            or redirect.target == redirect.parsed_source.path):
+            error_messages[redirect.source].append(
+                'ERROR: {redirect.filename}:{redirect.line_number} '
+                '- Circular redirect: {redirect.source} => {redirect.target}'
+                .format(redirect=redirect)
+            )
+        elif (urlparse.urljoin(redirect.source, to_url.path) in processed_redirects
+              and not redirect.status_code == 410):
             if not to_url.netloc:
-                error_messages[redirect.source].append('ERROR: {redirect.filename}:{redirect.line_number} - Circular redirect: {redirect.source} => {redirect.target}'.format(redirect=redirect))
+                error_messages[redirect.source].append(
+                    'ERROR: {redirect.filename}:{redirect.line_number} '
+                    '- Circular redirect: {redirect.source} => {redirect.target}'
+                    .format(redirect=redirect)
+                )
             elif to_url.netloc and not redirect.parsed_source.netloc:
-                warning_messages[redirect.source].append('WARNING: {redirect.filename}:{redirect.line_number}: - Possible circular redirect if hosting on domain {redirect.parsed_target.netloc}: {redirect.source} => {redirect.target}'.format(redirect=redirect))
+                warning_messages[redirect.source].append(
+                    'WARNING: {redirect.filename}:{redirect.line_number}: '
+                    '- Possible circular redirect if hosting on domain '
+                    '{redirect.parsed_target.netloc}: {redirect.source} => '
+                    '{redirect.target}'.format(redirect=redirect)
+                )
 
     # Check for circular redirects.
     for source, redirect in processed_redirects.items():
@@ -148,9 +170,13 @@ def preprocess_redirects(lines, raise_errors=True):
     # Now that we're done, either raise an exception if an error was raised and
     # we are not just running in validation mode
     if error_messages and raise_errors:
-        raise ImproperlyConfigured('There were errors while parsing redirects.  Run ./manage.py validate_redirects for error details')
+        raise ImproperlyConfigured('There were errors while parsing redirects. '
+                                   'Run ./manage.py validate_redirects for error details')
     # Output warnings for all errors and warnings found.
-    for messages in warning_messages.values() + error_messages.values():
+    # Python 2/3 compatibility requires calling list() on the values.
+    warning_message_list = list(warning_messages.values())
+    error_message_list = list(error_messages.values())
+    for messages in warning_message_list + error_message_list:
         for message in messages:
             warnings.warn(message)
 
@@ -181,12 +207,11 @@ class RedirectFallbackMiddleware(object):
     def get_redirects(self):
         # Get redirect directory
         redirect_path = getattr(settings, 'REDIRECTS_DIRECTORY',
-                               os.path.join(settings.PROJECT_PATH, '..', 'redirects'))
+                                os.path.join(settings.PROJECT_PATH, '..', 'redirects'))
 
         # Crawl the REDIRECTS_DIRECTORY scraping any CSV files found
         lines = scrape_redirects(redirect_path)
 
-        #redirects = preprocess_redirects(lines)
         return lines
 
     def process_response(self, request, response):

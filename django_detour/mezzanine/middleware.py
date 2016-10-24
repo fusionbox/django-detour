@@ -1,18 +1,21 @@
-# FIXME: Unused import
-from urlparse import urlparse
+"""This module contains a modified redirect middleware that is compatible with Mezzanine."""
+from __future__ import absolute_import
 
+from django.utils import six
 from django.conf import settings
 from django.contrib.sites.models import get_current_site
 
-from mezzanine.pages.views import page as page_view
-from mezzanine.pages.models import Page
-from mezzanine.utils.urls import path_to_slug
+from ..middleware import (
+    RedirectFallbackMiddleware as PlainRedirectFallbackMiddleware,
+    get_redirect
+)
 
-from fusionbox.middleware import (
-    RedirectFallbackMiddleware, get_redirect)
+if six.PY2:
+    from urlparse import urlparse
+else:
+    from urllib.parse import urlparse
 
-
-class RedirectFallbackMiddleware(RedirectFallbackMiddleware):
+class RedirectFallbackMiddleware(PlainRedirectFallbackMiddleware):
     def process_response(self, request, response):
         is_404 = response.status_code == 404
         is_my_site = get_current_site(request).domain == request.get_host()
