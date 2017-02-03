@@ -9,7 +9,7 @@ current_directory = os.path.dirname(__file__)
 with open(os.path.join(current_directory, 'README.rst')) as f:
     README = f.read()
 
-version = '0.0.9'
+version = '0.0.10'
 
 setup(name='django-detour',
     version=version,

@@ -16,7 +16,7 @@ from django.utils import six
 from django.conf import settings
 from django.http import HttpResponse
 from django.core.exceptions import ImproperlyConfigured
-from django.contrib.sites.models import get_current_site
+from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import iri_to_uri
 
 if six.PY2:
