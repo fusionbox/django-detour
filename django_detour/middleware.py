@@ -18,6 +18,8 @@ from django.http import HttpResponse
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import iri_to_uri
+from django.utils.deprecation import MiddlewareMixin
+
 
 if six.PY2:
     import urlparse
@@ -183,7 +185,7 @@ def preprocess_redirects(lines, raise_errors=True):
     return processed_redirects
 
 
-class RedirectFallbackMiddleware(object):
+class RedirectFallbackMiddleware(MiddlewareMixin):
     """
     This middleware handles 3xx redirects and 410s.
 
