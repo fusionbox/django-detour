@@ -35,6 +35,8 @@ def get_redirect(redirects, path, full_uri):
         redirect = redirects[iri_to_uri(path)]
     elif path in redirects:
         redirect = redirects[path]
+    elif settings.APPEND_SLASH and path + '/' in redirects:
+        redirect = redirects[path + '/']
     else:
         return None
 
