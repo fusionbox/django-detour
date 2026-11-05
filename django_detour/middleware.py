@@ -6,13 +6,12 @@ table and if one is found the appropriate redirect response is returned
 instead.
 """
 
+import csv
 import os
-
 import warnings
-
 from collections import defaultdict
+from urllib import parse as urlparse
 
-from django.utils import six
 from django.conf import settings
 from django.http import HttpResponse
 from django.core.exceptions import ImproperlyConfigured
@@ -20,13 +19,6 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import iri_to_uri
 from django.utils.deprecation import MiddlewareMixin
 
-
-if six.PY2:
-    import urlparse
-    import unicodecsv as csv
-else:
-    from urllib import parse as urlparse
-    import csv
 
 def get_redirect(redirects, path, full_uri):
     if full_uri in redirects:
@@ -204,7 +196,7 @@ class RedirectFallbackMiddleware(MiddlewareMixin):
     """
     def __init__(self, *args, **kwargs):
         raise_errors = kwargs.pop('raise_errors', True)
-        super(RedirectFallbackMiddleware, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         raw_redirects = self.get_redirects()
         self.redirects = preprocess_redirects(raw_redirects, raise_errors)
 

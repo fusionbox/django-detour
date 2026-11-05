@@ -1,7 +1,6 @@
 """This module contains a modified redirect middleware that is compatible with Mezzanine."""
-from __future__ import absolute_import
+from urllib.parse import urlparse
 
-from django.utils import six
 from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
 
@@ -10,10 +9,6 @@ from ..middleware import (
     get_redirect
 )
 
-if six.PY2:
-    from urlparse import urlparse
-else:
-    from urllib.parse import urlparse
 
 class RedirectFallbackMiddleware(PlainRedirectFallbackMiddleware):
     def process_response(self, request, response):
